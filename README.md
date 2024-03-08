@@ -14,9 +14,10 @@ nya nya mrp meow
 First, set some environment variables to configure wrapperbot:
 
 ```sh
-export WRAPPERBOT_USERNAME=catgpt
 export WRAPPERBOT_API_BASE_URL=https://fedi.example.com
+export WRAPPERBOT_EMAIL=catgpt@example.com
 export WRAPPERBOT_PASSWORD=hunter2
+export WRAPPERBOT_CLIENT_NAME="Paws"
 ```
 
 To post _once_ to the fediverse using that script as a generator, pipe its output into wrapperbot:
