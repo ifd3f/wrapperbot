@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "wrapperbot"
+version = "0.1.0"
+description = "A simple fediverse bot"
+authors = ["Astrid Yu <astrid@astrid.tech>"]
+readme = "README.md"
+license = "AGPL-3.0-only"
+packages = [
+  { include = "wrapperbot" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+wrapperbot = "wrapperbot.__main__:main"
