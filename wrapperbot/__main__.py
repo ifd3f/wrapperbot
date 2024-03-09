@@ -1,8 +1,13 @@
+import asyncio
+from typing import Any, Callable, Optional
 import click
 import os
 import subprocess
 from mastodon import Mastodon
 import logging
+from pleroma import Pleroma
+
+from wrapperbot.reply import reply_loop
 
 
 logger = logging.getLogger(__name__)
@@ -23,8 +28,7 @@ def cli(log_level: str):
 def post(command: str):
     m = get_mastodon()
 
-    logger.debug("Executing command: %r", command)
-    result = subprocess.check_output(command, shell=True).decode()
+    result = generate_toot(command)
 
     logger.info("Tooting: %r", result)
     m.toot(result)
@@ -34,7 +38,7 @@ def post(command: str):
 @click.argument("command")
 def reply(command: str):
     m = get_mastodon()
-    raise NotImplementedError("oopsie woopsie not yet impl :(")
+    asyncio.run(reply_loop(m, lambda: generate_toot(command)))
 
 
 def get_mastodon() -> Mastodon:
@@ -71,6 +75,14 @@ def get_mastodon() -> Mastodon:
 def setup_logging(log_level: str):
     # following https://docs.python.org/3/howto/logging.html#logging-to-a-file
     logging.basicConfig(level=getattr(logging, log_level.upper()))
+
+
+def generate_toot(command: str) -> Optional[str]:
+    logger.debug("Executing command: %r", command)
+    stdout = subprocess.check_output(command, shell=True)
+    if stdout == b'\0':
+        return None
+    return stdout.decode()
 
 
 if __name__ == "__main__":
