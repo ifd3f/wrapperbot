@@ -6,6 +6,7 @@ import subprocess
 from mastodon import Mastodon
 import logging
 from pleroma import Pleroma
+from wrapperbot.command import generate_toot
 
 from wrapperbot.reply import reply_loop
 
@@ -29,6 +30,9 @@ def post(command: str):
     m = get_mastodon()
 
     result = generate_toot(command)
+    if result is None:
+        logger.info("No toot was generated, will not post")
+        return
 
     logger.info("Tooting: %r", result)
     m.toot(result)
@@ -75,14 +79,6 @@ def get_mastodon() -> Mastodon:
 def setup_logging(log_level: str):
     # following https://docs.python.org/3/howto/logging.html#logging-to-a-file
     logging.basicConfig(level=getattr(logging, log_level.upper()))
-
-
-def generate_toot(command: str) -> Optional[str]:
-    logger.debug("Executing command: %r", command)
-    stdout = subprocess.check_output(command, shell=True)
-    if stdout == b'\0':
-        return None
-    return stdout.decode()
 
 
 if __name__ == "__main__":
