@@ -1,14 +1,14 @@
 import logging
-from typing import Any, Callable, Optional
+import os
+from typing import Any
 from mastodon import Mastodon
 from pleroma import Pleroma
 
 from wrapperbot.command import PostGenerator
 
 
-LOOP_COOLDOWN_TIME = 5
-MAX_THREAD_LENGTH = 10
-MAX_RETRIES = 5
+MAX_THREAD_LENGTH: int = int(os.environ.get("WRAPPERBOT_MAX_THREAD_LENGTH", "10"))
+REPLY_TO_BOTS: bool = os.environ.get("WRAPPERBOT_REPLY_TO_BOTS", "0") == "1"
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,9 @@ async def reply_loop(m: Mastodon, generator: PostGenerator):
 
     myself = (await p.me())["id"]
     logger.info("I am ID %r", myself)
+    logger.info(
+        "MAX_THREAD_LENGTH=%s, REPLY_TO_BOTS=%s", MAX_THREAD_LENGTH, REPLY_TO_BOTS
+    )
 
     while True:
         logger.info("Running stream loop")
@@ -33,7 +36,8 @@ async def reply_loop(m: Mastodon, generator: PostGenerator):
 
 async def stream_and_handle_notifs(generator, p, myself):
     async for n in p.stream_mentions():
-        logger.debug("Got notification: %r", n)
+        logger.info("Received notification")
+        logger.debug("Full notification: %r", n)
 
         try:
             await handle_notif(p, myself, n, generator)
@@ -50,10 +54,19 @@ async def handle_notif(
     post_id = notification["status"]["id"]
 
     context = await pleroma.status_context(post_id)
+
     length = get_thread_length(context, myself)
     logger.debug("Thread length is %s", length)
     if length >= MAX_THREAD_LENGTH:
-        logger.info("Reached max thread length, refusing to reply")
+        logger.info(
+            "Reached max thread length (%s >= %s), refusing to reply",
+            length,
+            MAX_THREAD_LENGTH,
+        )
+        return
+
+    if notification["account"]["bot"] and not REPLY_TO_BOTS:
+        logger.info("Account is bot, refusing to reply")
         return
 
     try:

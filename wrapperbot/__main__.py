@@ -1,11 +1,8 @@
 import asyncio
-from typing import Any, Callable, Optional
 import click
 import os
-import subprocess
 from mastodon import Mastodon
 import logging
-from pleroma import Pleroma
 from wrapperbot.command import generate_toot
 
 from wrapperbot.reply import reply_loop
@@ -51,8 +48,8 @@ def get_mastodon() -> Mastodon:
     password: str = os.environ["WRAPPERBOT_PASSWORD"]
     client_name: str = os.environ.get("WRAPPERBOT_CLIENT_NAME", "Wrapperbot")
 
-    logger.debug(
-        "Setting up mastodon with email=%r, base_url=%r, client_name=%r",
+    logger.info(
+        "Setting up with email=%r, base_url=%r, client_name=%r",
         email,
         base_url,
         client_name,
