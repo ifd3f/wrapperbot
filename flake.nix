@@ -8,21 +8,33 @@
         [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
       pkgs = forAllSystems (system: nixpkgs.legacyPackages.${system});
+      extraPoetryOverrides = final: prev: {
+        pleroma-py = prev.pleroma-py.overridePythonAttrs
+          (old: { buildInputs = [ final.setuptools ]; });
+      };
     in {
       packages = forAllSystems (system:
         let
           inherit (poetry2nix.lib.mkPoetry2Nix { pkgs = pkgs.${system}; })
-            mkPoetryApplication;
-        in { default = mkPoetryApplication { projectDir = self; }; });
+            mkPoetryApplication overrides;
+        in {
+          default = mkPoetryApplication {
+            projectDir = self;
+            overrides = overrides.withDefaults extraPoetryOverrides;
+          };
+        });
 
       devShells = forAllSystems (system:
         let
           inherit (poetry2nix.lib.mkPoetry2Nix { pkgs = pkgs.${system}; })
-            mkPoetryEnv;
+            mkPoetryEnv overrides;
         in {
           default = pkgs.${system}.mkShellNoCC {
             packages = with pkgs.${system}; [
-              (mkPoetryEnv { projectDir = self; })
+              (mkPoetryEnv {
+                projectDir = self;
+                overrides = overrides.withDefaults extraPoetryOverrides;
+              })
               poetry
             ];
           };
